@@ -3,75 +3,135 @@
 \usepackage[spanish]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage{hyperref}
+\usepackage{float}
+
 \title{Visualización de datos genómicos: \textit{circos plot}}
-\author{Said}
+\author{Said Muñoz Montero}
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
+\SweaveOpts{concordance=TRUE,prefix.string=plot, eps = FALSE, pdf = TRUE, keep.source=TRUE}
 
 \maketitle
 
 \section{Gráfico de circos}
 Uno de los retos para el análisis de datos genómicos radica en la visualización de los datos. Especialmente cuando se tienen datos de diferentes plataformas, es posible generar una gran cantidad de gráficos que por separado no logran ser muy claras.
-\\
-Una forma sencilla y simple de generar un gráfico de datos genómicos es a través de un gráfico de circos, creado por Martin Kryzywinski. Originalmente los \textit{circos plot} fueron desarrollados por \href{https://circos.ca/}{Circos}, este tipo de gráficos no está limitado a información genómica.\cite[]{krzywinski2009circos}
 
-\subsection{\textit{Hands on}, Ejemplo 1}
+Una forma sencilla y simple de generar un gráfico de datos genómicos es a través de un gráfico de circos, creado por Martin Kryzywinski. Originalmente los gráficos \textit{circos} fueron desarrollados por \href{https://circos.ca/}{Circos}, este tipo de gráficos no está limitado a información genómica.\cite{krzywinski2009circos}
+
+Los \textit{circos} son especialmente útiles para visualizar datos relacionales con múltiples dimensiones. En el caso de las ciencias ómicas, cada año se aumenta la complejidad en el análisis de los seres vivos, desde genómica, transcriptómica, proteómica, metiloma, etc. El gráfico \textit{circos} permite mostrar un panorama integrativo de muchas de estas plataformas.
+
+\begin{figure}[H]
+\centering
+\includegraphics{circos_example}
+\caption{A) Histograma. B) Ideograma. C)Histograma (invertido). D) \textit{Heatmap}. E) \textit{Links}. F) Resaltados. G) Grids. H) Ticks.}
+\end{figure}
+
+Se observa en la figura anterior los diferentes tipos de gráficos que se pueden presentar en un gráfico \textit{circos}. El usuario es libre de elegir lo que más se ajuste al tipo de datos con el que cuente.
+
+Usualmente los circos plot se hacen con Perl, generando una serie de archivos de configuración antes de ver el gráfico. Esta tarea puede ser muy pesada, por lo que se mostrarán dos ejemplos usando \textit{R}.
+
+\subsection{Ejemplo 1}
+\label{ejemplo1}
 
 En esta sección aprenderemos las bases de un gráfico de circos utilizando los paquetes de Bioconductor: OmicCircos y RCircos.
 
-<<echo=FALSE>>=
-spar <- function(mar=c(3.25+bot-.45*multi,3.5+left,.5+top+.25*multi,.5+rt),
-                 lwd = if(multi)1 else 1.75,
-                 mgp = if(multi) c(1.5, .365, 0) else c(2.4-.4, 0.475, 0),
-                 tcl = if(multi)-0.25 else -0.4,
-                 bot=0, left=0, top=0, rt=0, ps=14,
-                 mfrow=NULL, ...)
-  {
-    multi <- length(mfrow) > 0
-    par(mar=mar, lwd=lwd, mgp=mgp, tcl=tcl, ...)
-    if(multi) par(mfrow=mfrow)
-  }
-options(SweaveHooks=list(fig=spar)) # run spar() before every plot
-options(prompt='  ',continue='  ')  # remove prompt characters at start of lines
+Cargamos las librerías que se utilizarán. En caso de que no estén instaladas:
+
+<<eval=FALSE>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("RCircos")
+biocLite("OmicCircos")
 @
 
-\SweaveOpts{prefix.string=plot, eps = FALSE, pdf = TRUE, keep.source=TRUE}
-
 <<echo=True>>=
-#Cargamos las librerías que se utilizarán
-#En caso de que no estén instaladas,
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("RCircos")
-#biocLite("OmicCircos")
+
 library("OmicCircos")
 library("RCircos")
+@
 
+Utilizaremos la referencia para el humano llamada "hg19".
+
+<<>>=
 data("UCSC.hg19.chr")
 head(UCSC.hg19.chr)
+@
 
+Se puede observar la estructura de los datos (dataframe), donde las columnas corresponden a: cromosoma, posición inicial, posición final, nombre de la región y tinción, respectivamente. 
 
-#Para el primer gráfico necesitamos especificar ciertos parámetros
+Para el primer gráfico necesitamos especificar ciertos parámetros:
 
-#chr.exclude es un vector para excluir cromosomas del circos plot
+\textit{\textbf{chr.exclude}} es una variable, normalmente en forma de vector para indicar los cromosomas que se desean excluir del circos plot. 
+
+<<>>=
 chr.exclude <- NULL
+@
 
-#cyto.info contiene el dataframe con la información del genoma que se graficará
+\textit{\textbf{cyto.info}} contiene el \textit{dataframe} con la información del genoma que se graficará. Para este ejemplo, la referencia del humano.
+
+<<>>=
 cyto.info <- UCSC.hg19.chr
+@
 
-#tracks.inside indica el número de capas que se graficarán dentro del circos
+\textit{\textbf{tracks.inside}} indica el número de capas que se graficarán dentro del circos. 
+
+<<>>=
 tracks.inside <- 1
+@
 
-#tracks.outside indica el número de capas que se graficarán afuera del circos
+\textit{\textbf{tracks.outside}} indica el número de capas que se graficarán afuera del circos.
+
+<<>>=
 tracks.outside <- 0
+@
 
+Con la función \textit{RCircos.Set.Core.Components} se configura el entorno gráfico.
+
+<<>>=
 RCircos.Set.Core.Components(cyto.info, chr.exclude, tracks.inside, tracks.outside);
+@
 
+Utilizaremos también un dataset de \textit{RCircos}.
+
+<<>>=
 data("RCircos.Link.Data")
+
 head(RCircos.Link.Data)
 @
 
-\begin{figure}[ht]
+Guardamos nuestro gráfico en formato PDF con el siguiente código.
+
+<<echo=true,fig=false>>=
+out.file <- "RCircosHelloWorld.pdf";
+pdf(file=out.file, height=8, width=8, compress=TRUE);
+@
+
+Para empezar a dibujar el circos ejecutamos:
+
+<<>>=
+RCircos.Set.Plot.Area();
+@
+
+Posteriormente se grafica el ideograma (cariotipo):
+
+<<>>=
+RCircos.Chromosome.Ideogram.Plot();
+@
+
+Los \textit{links} se grafican usando:
+
+<<>>=
+RCircos.Link.Plot(RCircos.Link.Data, 1, TRUE)
+@
+
+Para poder guardar todo el gráfico en el PDF:
+
+<<>>=
+dev.off()
+@
+
+El resultado de todo este primer ejemplo es:
+
+\begin{figure}[H]
 \centering
 <<echo=false,fig=true>>=
 
@@ -79,33 +139,41 @@ RCircos.Set.Plot.Area();
 RCircos.Chromosome.Ideogram.Plot();
 RCircos.Link.Plot(RCircos.Link.Data, 1, TRUE)
 @
-\caption{Figura 1.-Circos plot con Links}
+\caption{Circos plot con Links}
 \end{figure}
 
-<<echo=true,fig=false>>=
-#Guardamos nuestro gráfico en formato PDF
-out.file <- "HelloWorldHuman.pdf";
-pdf(file=out.file, height=8, width=8, compress=TRUE);
-RCircos.Set.Plot.Area();
-RCircos.Chromosome.Ideogram.Plot();
-RCircos.Link.Plot(RCircos.Link.Data, 1, TRUE)
-dev.off()
-@
+\subsection{Ejemplo 2}
 
-\subsection{Ejemplo 2, \textit{Leishmania mexicana}}
+Para este ejemplo revisaremos el ejemplo de un patógeno intracelular, \textit{Leishmania mexicana}. 
+
+Este organismo cuenta con 34 cromosomas y presenta patrones de expresión, número de copias y genes de fusión muy interesantes.
+
+Dicho esto, utilizamos el genoma de referencia de \textit{Leishmania mexicana}.
+
+En la carpeta de este tutorial se provee el archivo "karyotype.txt".
+
 <<echo=TRUE,fig=FALSE>>=
-#En este ejemplo se utilizará el genoma de Leishmania mexicana como referencia
-
-#Se carga el genoma de Leishmania mexicana en formato de cariotipo
 LmexicanaKaryotype<-read.table("karyotype.txt",header=T)
 
 head(LmexicanaKaryotype)
+@
 
+Se puede observar una estructura similar al cariotipo humano que se muestra en el ejemplo \ref{ejemplo1}.
+
+Para este ejemplo tenemos que cambiar los parámetros por defecto de las funciones de RCircos.
+
+<<>>=
 rcircos.params <- RCircos.Get.Plot.Parameters()
-#Se modifican las unidades cromosómicas ya que el genoma de Lmexicana es más chico al humano
-rcircos.params$base.per.unit <- 10000;
+@
 
-#De igual forma se ajustan parámetros del gráfico
+Se modifican las unidades cromosómicas ya que el genoma de \textit{Lmexicana} es más chico al humano. Definimos una unidad cromosómica como 10kbases.
+<<>>=
+rcircos.params$base.per.unit <- 10000;
+@
+
+De igual forma se ajustan otros parámetros del gráfico.
+
+<<>>=
 rcircos.params$chrom.paddings<-10
 
 RCircos.Set.Core.Components(LmexicanaKaryotype, chr.exclude, tracks.inside, tracks.outside );
@@ -116,40 +184,76 @@ tracks.inside <- 3;
 tracks.outside <- 0;
 @
 
-\begin{figure}[ht]
-\centering
-<<plotlm,echo=true,fig=true>>=
-#inicializamos el gráfico
+Al igual que en ejemplo \ref{ejemplo1}, generamos un gráfico de cariotipo.
+
+
+<<echo=true,fig=false,eval=false>>=
 RCircos.Set.Plot.Area();
 RCircos.Chromosome.Ideogram.Plot();
-
-#Cargamos la matriz de expresión
-expresion=read.table("expresion.txt",header=T)
-head(expresion)
-
-#Se hace una gráfica con los datos de expresión en la primer capa
-RCircos.Line.Plot(expresion,data.col = 4,track.num = 1,side="in")
-
-#Se hace un gráfico de la distribución de mutaciones puntuales en el genoma
-snp=read.table("snp.txt",header=TRUE)
-head(snp)
-
-RCircos.Histogram.Plot(snp,data.col=4,track.num=2,side="in")
-
-#FusionGenes
-#Se calcularon genes de Fusión a partir de datos de secuenciación masiva
-fusiones<-read.table("fusiones.txt",header=TRUE)
-RCircos.Link.Plot(fusiones, 3, TRUE);
-
 @
 
-\caption{Figura 1.-Circos plot con Links}
+Con \textit{read.table} se carga la matriz de expresión, se observa la estructura de estos datos: cromosoma, posición inicial, posición final y nivel de expresión.
+
+<<echo=true,fig=false,eval=True>>=
+expresion=read.table("expresion.txt",header=T)
+head(expresion)
+@
+
+Con \textit{RCircos.Line.Plot} se hace una gráfica con los datos de expresión en la primer capa.
+
+<<echo=true,fig=false,eval=false>>=
+RCircos.Line.Plot(expresion,data.col = 4,track.num = 1,side="in")
+@
+
+El archivo "snp.txt", contiene la densidad de mutaciones puntuales promedio en cada cromosoma, esto podría dar una idea del número de copias global de cada cromosoma en este organismo. 
+
+<<echo=true,fig=false,eval=True>>=
+snp=read.table("snp.txt",header=TRUE)
+head(snp)
+@
+
+\textit{RCircos.Histogram.Plot} graficará los histogramas de los datos de mutaciones puntuales por cada cromosoma.
+
+<<echo=true,fig=false,eval=false>>=
+RCircos.Histogram.Plot(snp,data.col=4,track.num=2,side="in")
+@
+
+Con secuenciación masiva se lograron determinar genes de fusión en la muestra, se muestran algunos en el archivo "fusiones.txt", y lo graficamos con la misma función usada en el ejemplo \ref{ejemplo1}.
+
+<<echo=true,fig=false,eval=True>>=
+fusiones<-read.table("fusiones.txt",header=TRUE)
+head(fusiones)
+@
+
+<<echo=true,fig=false,eval=false>>=
+RCircos.Link.Plot(fusiones, 3, TRUE);
+@
+
+El resultado es el siguiente:
+
+\begin{figure}[H]
+\centering
+
+<<plotlm,echo=false,fig=True>>=
+RCircos.Set.Plot.Area();
+RCircos.Chromosome.Ideogram.Plot();
+expresion=read.table("expresion.txt",header=T)
+RCircos.Line.Plot(expresion,data.col = 4,track.num = 1,side="in")
+snp=read.table("snp.txt",header=TRUE)
+RCircos.Histogram.Plot(snp,data.col=4,track.num=2,side="in")
+fusiones<-read.table("fusiones.txt",header=TRUE)
+RCircos.Link.Plot(fusiones, 3, TRUE);
+@
+\caption{Circos plot para \textit{Leishmania mexicana}}
 \end{figure}
 
-\clearpage
-\bibliographystyle{plain}
-\bibliography{bibliography}
+\section{Conclusiones}
+RCircos es una gran herramienta para generar gráficos exploratorios, sin embargo para generar gráficos más completos se pueden revisar otras implementaciones de Circos plot.
 
+Los gráficos de circos permiten atacar el problema de visualización que aqueja a las ómicas.
+
+\bibliography{bibliography}
+\bibliographystyle{plain}
 \nocite{*}
 
 \end{document}

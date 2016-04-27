@@ -1,0 +1,21 @@
+\begin{thebibliography}{1}
+
+\bibitem{hu2014omiccircos}
+Ying Hu, Chunhua Yan, Chih-Hao Hsu, Qing-Rong Chen, Kelvin Niu, George~A
+  Komatsoulis, and Daoud Meerzaman.
+\newblock Omiccircos: a simple-to-use r package for the circular visualization
+  of multidimensional omics data.
+\newblock {\em Cancer informatics}, 13:13, 2014.
+
+\bibitem{krzywinski2009circos}
+Martin Krzywinski, Jacqueline Schein, Inanc Birol, Joseph Connors, Randy
+  Gascoyne, Doug Horsman, Steven~J Jones, and Marco~A Marra.
+\newblock Circos: an information aesthetic for comparative genomics.
+\newblock {\em Genome research}, 19(9):1639--1645, 2009.
+
+\bibitem{zhang2013rcircos}
+Hongen Zhang, Paul Meltzer, and Sean Davis.
+\newblock Rcircos: an r package for circos 2d track plots.
+\newblock {\em BMC bioinformatics}, 14(1):244, 2013.
+
+\end{thebibliography}
